@@ -12,6 +12,10 @@ path = require('path');
 var compiler = require('../lib/compiler');
 var async = require('async');
 
+var RUNTIME_PATH = (function () {
+  return require('traceur').RUNTIME_PATH;
+})();
+
 function asyncCompile(content, options, callback) {
   var result;
   try {
@@ -23,29 +27,47 @@ function asyncCompile(content, options, callback) {
   callback(null, result);
 }
 
+/*
+* Returns a function that compiles one file
+*/
+function getCompileOne (grunt, compile, options, dest) {
+  return function (src, callback) {
+    var content = grunt.file.read(src).toString('utf8');
+    options.filename = src;
+    compile(content, options, function (err, result) {
+      var sourceMapName, sourceMapPath;
+      if (err) {
+        callback(err);
+      } else {
+        if (options.sourceMap) {
+          sourceMapName = path.basename(src) + '.map';
+          sourceMapPath = path.join(dest, '..',  sourceMapName);
+          result.js += '//# sourceMappingURL=' + sourceMapName + '\n';
+          grunt.file.write(sourceMapPath, result.sourceMap);
+          grunt.log.debug('SourceMap written to "' + sourceMapName + '"');
+        }
+        callback(null, result.js);
+      }
+    });
+  };
+};
+
 /**
 * Compiles a list of srcs files
 * */
 function compileAll(grunt, compile, srcs, dest, options, callback) {
   grunt.log.debug('Compiling... ' + dest);
-  var content = srcs.map(function (src) {
-    return grunt.file.read(src).toString('utf8');
-  }).join(';');
-  options.filename = dest;
-  compile(content, options, function(err, result) {
-    var sourceMapName;
+  async.map(srcs, getCompileOne(grunt, compile, options, dest), function (err, results) {
+    var output;
     if (err) {
       grunt.log.error(err);
       callback(false);
     } else {
-      if (options.sourceMap) {
-        sourceMapName = dest + '.map';
-        result.js += '\n//# sourceMappingURL=' +
-        path.basename(sourceMapName) + '\n';
-        grunt.file.write(sourceMapName, result.sourceMap);
-        grunt.log.debug('SourceMap written to "' + sourceMapName + '"');
+      output = results.join('');
+      if (options.includeRuntime) {
+        output = fs.readFileSync(RUNTIME_PATH) + output;
       }
-      grunt.file.write(dest, result.js, {encoding: 'utf8'});
+      grunt.file.write(dest, output, {encoding: 'utf8'});
       grunt.log.debug('Compiled successfully to "' + dest + '"');
       grunt.log.ok(srcs + ' -> ' + dest);
       callback(true);

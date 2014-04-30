@@ -17,7 +17,8 @@ module.exports = function(grunt) {
     traceur: {
       options: {
         includeRuntime: true,
-        spawn: true
+        spawn: true,
+        modules: 'commonjs'
         // traceur options here
       },
       test: {
@@ -26,8 +27,6 @@ module.exports = function(grunt) {
           cwd: 'test/fixtures',
           src: ['*.js'],
           dest: 'test/tmp'
-        }, {
-          'test/tmp/all.js': ['test/fixtures/args.js', 'test/fixtures/destructuring.js']
         }]
       }
     },
