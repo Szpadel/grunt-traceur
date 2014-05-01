@@ -27,13 +27,17 @@ In your project's Gruntfile, add a section named `traceur` to the data object pa
 grunt.initConfig({
   traceur: {
     options: {
+      includeRuntime: true
       // traceur options here
     },
     custom: {
-      files:{
-        'build/all.js': ['js/**/*.js']
-      }
-    },
+      files: [{
+        expand: true,
+        cwd: 'es6',
+        src: ['*.js'],
+        dest: 'es5'
+      }]
+    }
   },
 })
 ```
