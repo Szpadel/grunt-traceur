@@ -57,6 +57,11 @@ function getCompileOne (grunt, compile, options, dest) {
 * */
 function compileAll(grunt, compile, srcs, dest, options, callback) {
   grunt.log.debug('Compiling... ' + dest);
+  options.modules = options.modules || 'commonjs';
+  if (options.modules === 'commonjs' && srcs.length > 1) {
+    grunt.log.error(new Error('manyToOne compilation is not available for commonjs modules.'));
+    return callback(false);
+  }
   async.map(srcs, getCompileOne(grunt, compile, options, dest), function (err, results) {
     var output;
     if (err) {

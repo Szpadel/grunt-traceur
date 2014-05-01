@@ -17,8 +17,7 @@ module.exports = function(grunt) {
     traceur: {
       options: {
         includeRuntime: true,
-        spawn: true,
-        modules: 'commonjs'
+        spawn: true
         // traceur options here
       },
       test: {
